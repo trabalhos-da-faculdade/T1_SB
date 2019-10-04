@@ -31,6 +31,7 @@ int width, height;
 int pos;
 
 
+
 // Carregando uma Imagem com a Biblioteca SOIL
 void load(char* name, Img* pic){
     int channel; //Channel é o local da imagem que será lida
@@ -111,7 +112,7 @@ int main(int argc, char* argv[]){
  
     printf("\n");
     // Aloca memória para a nova imagem
-    //pic[2].pixels = malloc(pic[1].width * pic[1].height * 3);
+    pic[2].pixels = malloc(pic[1].width * pic[1].height * 3);
 
 
     RGB* aux = malloc((width*height)*3);
@@ -159,7 +160,7 @@ int main(int argc, char* argv[]){
         printf("[%02X%02X%02X] \n", pic[2].pixels[i].r , pic[2].pixels[i].g, pic[2].pixels[i].b);
     }
 
-    int teste = SOIL_save_image("teste.bmp",1,pic[2].width,pic[2].height,0,(unsigned char*) pic[2].pixels);
+    int teste = SOIL_save_image("teste.bmp",1,pic[2].width,pic[2].height,3,(unsigned char*) pic[2].pixels);
     printf("%d \n", teste);
 
 
