@@ -1,4 +1,4 @@
 #!/bin/bash
 
 gcc main.c lib/SOIL/*.c -lm -lGL -lGLU -lglut -o run
-./run mr_robot.png
+./run universe.png mr_robot.png mr_robot_universe.png   
