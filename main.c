@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include<time.h>
 
 //Biblioteca de Leitura das Imagens
 #include "SOIL.h"
@@ -26,20 +27,21 @@ typedef struct {
 
 // Protótipos das Funções
 void load(char* name, Img* pic); //Carrega a Imagem RGB
+float dist(RGB* a, RGB* b);
 void init(); // PRA OPENGL
 void draw(); // PRA OPENGL
 void keyboard(unsigned char key, int x, int y); // PRA OPENGL
 
 // Vetores
-Img pic[2];
-GLuint tex[4];
+Img pic[3];
+GLuint tex[3];
 
 // Largura e Altura
 int width, height;
 int pos;
 int sel;
 unsigned char* novaImagem;
-
+clock_t start;
 
 // =================================================
 // FUNÇÃO LOAD PARA CARREGAR A IMAGEM NO COMPUTADOR
@@ -62,7 +64,7 @@ void load(char* name, Img* pic){
 // ==========================================
 
 int testeVal(int* vet, int pos){
-    if(sizeof(vet) == 0){
+    if(sizeof(vet) != 0){
         return 1;
     }
     for(int i = 0 ; i < sizeof(vet) ; i++){
@@ -115,6 +117,16 @@ void keyboard(unsigned char key, int x, int y){
     glutPostRedisplay();
 }
 
+// ===============================
+// FUNCAO DE CALCULO DA DISTANCIA
+// ===============================
+float dist(RGB* a, RGB* b) {
+    float d = pow(a->r - b->r,2);
+    d += pow(a->g - b->g,2);
+    d += pow(a->b - b->b,2);
+    return d;
+}
+
 
 
 int main(int argc, char* argv[]){
@@ -165,71 +177,44 @@ int main(int argc, char* argv[]){
 
  
     printf("\n");
-    
-    float dist; // VAR DE DISTÂNCIA
 
-    float pc = 441.67295593; //PIOR CASO POSSIVEL(sqrt((255-255)*2))
+    // ===========================================
+    // ALGORITMO DO PROFESSOR PARA FAZER FUNCIONAR
+    // ===========================================
 
-    float mc = 1; // MELHOR CASO POSSIVEL
+    #define PAL 0
+    #define SRC 1
+    #define DST 2
 
-    int vet[sizeof(pic[0].pixels)-1]; // VETOR COM AS POSIÇÕES
+    memcpy(pic[DST].pixels, pic[PAL].pixels, pic[1].width*pic[1].height*3);
+    printf("Processando....");
 
-    RGB* aux = malloc((width*height)*3);
+    long int tot = 0;
+    int tent = 0;
+    start = clock();
+    int tam = pic[0].width + pic[0].height;
 
+    while(1){
+        int pos1 = rand()%tam;
+        int pos2 = rand()%tam;
 
-    //Cálculo da Distância 
-    for(int i = 0 ; i < sizeof(pic[0].pixels); i++){
-        for(int j = 0 ; j < sizeof(pic[1].pixels) ; j++){
-            unsigned char r1 = pic[0].pixels[i].r;
-            unsigned char r2 = pic[1].pixels[j].r;
-            unsigned char g1 = pic[0].pixels[i].g;
-            unsigned char g2 = pic[1].pixels[j].g;
-            unsigned char b1 = pic[0].pixels[i].b;
-            unsigned char b2 = pic[1].pixels[j].b;
+        RGB* s1 = &pic[SRC].pixels[pos1];
+        RGB* s2 = &pic[SRC].pixels[pos2];
+        RGB* d1 = &pic[DST].pixels[pos1];
+        RGB* d2 = &pic[DST].pixels[pos2];
 
-            unsigned char rs = r1 - r2;
-            unsigned char gs = g1 - g2;
-            unsigned char bs = b1 - b2;
-
-            unsigned char rp = pow(rs,2);
-            unsigned char gp = pow(gs,2);
-            unsigned char bp = pow(bs,2);
-
-            dist = (float) sqrt(rp+gp+bp);
-
-            // VERIFICAÇÃO DA POSIÇÃO E ARMAZENAMENTO
-            if(dist < pc && dist >= mc && testeVal(vet,i)){
-                pos = j;
-                pc = dist;
-            }
+        if(dist(s1,d1) + dist(s2,d2) > dist(s1,d2) + dist(s2,d1)){
+            RGB aux = *d1;
+            pic[DST].pixels[pos1] = *d2;
+            pic[DST].pixels[pos2] = aux;
+            tent = 0;
+            tot++;
         }
-
-        // AUXILIAR PARA SALVAR AS POSIÇÕES
-        aux[i].r = pic[0].pixels[pos].r;
-        aux[i].g = pic[0].pixels[pos].g;
-        aux[i].b = pic[0].pixels[pos].b;
-        
-        // COLOCANDO OS PIXELS DA IMAGEM 1 NA IMAGEM 2
-        //pic[2].pixels[i].r = pic[0].pixels[pos].r;
-        //pic[2].pixels[i].g = pic[0].pixels[pos].g;
-        //pic[2].pixels[i].b = pic[0].pixels[pos].b;
-
-        //Armazenando o valor da pos no vet
-        vet[i] = pos;
-
+        else tent++;
+        if(tent > 5000){
+            break;
+        }
     }
-
-    // VERIFICAÇÃO DA SAÍDA DE VALOR DA TERCEIRA IMAGEM
-    for(int i = 0 ; i < sizeof(pic[2].pixels); i++){
-        printf("[%02X%02X%02X] \n", pic[2].pixels[i].r , pic[2].pixels[i].g, pic[2].pixels[i].b);
-    }
-
-
-    // SALVANDO A IMAGEM EM SAIDA.BMP
-    int teste = SOIL_save_image("saida.bmp",1,pic[2].width,pic[2].height,3,(unsigned char*) aux);
-    printf("Status da Criação da Imagem: %d \n", teste);
-
-    // CARREGANDO A NOVA IMAGEM 
 
     // INICIANDO O GLUT
     glutInit(&argc,argv);
@@ -249,10 +234,13 @@ int main(int argc, char* argv[]){
     // Registra a função Callback do Teclado
     glutKeyboardFunc(keyboard);
 
+    //verificacao do tamanho da pic[2]
+    pic[2].pixels = malloc(pic[1].width * pic[1].height * 3); // W x H x 3 bytes (RGB)
+
     //Cria o Vetor do tex para o OPENGL
     tex[0] = SOIL_create_OGL_texture((unsigned char*) pic[0].pixels, pic[0].width, pic[0].height, SOIL_LOAD_RGB, SOIL_CREATE_NEW_ID, 0);
     tex[1] = SOIL_create_OGL_texture((unsigned char*) pic[1].pixels, pic[1].width, pic[1].height, SOIL_LOAD_RGB, SOIL_CREATE_NEW_ID, 0);
-    tex[2] = SOIL_create_OGL_texture((unsigned char*) aux, pic[2].width, pic[2].height, SOIL_LOAD_RGB, SOIL_CREATE_NEW_ID, 0);
+    tex[2] = SOIL_create_OGL_texture((unsigned char*) pic[2].pixels, pic[2].width, pic[2].height, SOIL_LOAD_RGB, SOIL_CREATE_NEW_ID, 0);
 
     // Define a Janela de visualização 2D
     glMatrixMode(GL_PROJECTION);
@@ -261,30 +249,6 @@ int main(int argc, char* argv[]){
 
     // Entra no Loop de eventos
     glutMainLoop();
-
-
-
-
-
-    
-
-
-
-
-
-
-    
-    
-
-   
-   
-    
-
-
-
-
-
-    
 
 
 }
