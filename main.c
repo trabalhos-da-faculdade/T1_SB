@@ -216,6 +216,8 @@ int main(int argc, char* argv[]){
         }
     }
 
+    clock_t end = clock();
+
     // INICIANDO O GLUT
     glutInit(&argc,argv);
 
