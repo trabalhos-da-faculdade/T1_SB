@@ -148,7 +148,11 @@ unsigned int
 	/*	OK, make it a texture!	*/
 	tex_id = SOIL_internal_create_OGL_texture(
 			img, width, height, channels,
+<<<<<<< HEAD
 			reuse_texture_ID, flags,
+=======
+			reuse_texture_ID, flags,	
+>>>>>>> 0346d03f2b3c5b77b9dcc644138a71109ff8db6c
 			GL_TEXTURE_2D, GL_TEXTURE_2D,
 			GL_MAX_TEXTURE_SIZE );
 	/*	and nuke the image data	*/
